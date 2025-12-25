@@ -27,4 +27,12 @@ class Crop(BaseModel):
 
 class TotalCrop(BaseModel):
     crop : List[Crop]
+
+class FarmerUpdate(BaseModel):
+    name: Optional[str] = None
+    age: Optional[int] = None
+    address: Optional[Address] = None
+
+    class Config:
+        extra = "forbid"
     

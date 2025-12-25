@@ -1,7 +1,7 @@
 from data_models import TotalCrop
 import firebase_admin
 from firebase_admin import credentials, firestore
-from data_models import Farmer , Crop
+from data_models import Farmer , Crop , FarmerUpdate
 from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
@@ -43,6 +43,48 @@ async def get_farmer(mobile_number: str):
         return doc.to_dict()
     else:
         raise HTTPException(status_code=404, detail="Farmer not found")
+
+
+@app.patch("/update-basic-farmer/{mobile_number}")
+async def update_farmer(mobile_number: str, farmer_update: FarmerUpdate):
+    try:
+        doc_ref = db.collection('farmers').document(mobile_number)
+        
+        # Check if farmer exists
+        if not doc_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Farmer not found")
+        
+        # Filter out None values to only update provided fields
+        update_data = farmer_update.dict(exclude_unset=True)
+        
+        if not update_data:
+             raise HTTPException(status_code=400, detail="No fields provided for update")
+
+        # Update Firestore
+        doc_ref.update(update_data)
+        
+        return {"status": "success", "message": f"Farmer profile updated successfully."}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/delete-basic-farmer/{mobile_number}")
+async def delete_farmer(mobile_number: str):
+    try:
+        doc_ref = db.collection('farmers').document(mobile_number)
+        
+        # Check if farmer exists
+        if not doc_ref.get().exists:
+            raise HTTPException(status_code=404, detail="Farmer not found")
+        
+        # Delete document
+        doc_ref.delete()
+        
+        return {"status": "success", "message": "Farmer profile deleted successfully."}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/create-crop")
